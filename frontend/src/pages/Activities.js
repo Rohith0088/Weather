@@ -19,13 +19,17 @@ const Activities = () => {
       if (filter.type) params.type = filter.type;
       if (filter.status) params.status = filter.status;
       
-      const [activitiesRes, registrationsRes] = await Promise.all([
-        activitiesAPI.getAll(params),
-        user ? registrationsAPI.getMyRegistrations() : Promise.resolve({ data: [] })
-      ]);
-      
+      // Fetch activities
+      const activitiesRes = await activitiesAPI.getAll(params);
       setActivities(activitiesRes.data);
-      setRegisteredActivities(registrationsRes.data.map(r => r.activity._id));
+      
+      // Only fetch registrations if user is logged in
+      if (user) {
+        const registrationsRes = await registrationsAPI.getMyRegistrations();
+        setRegisteredActivities(registrationsRes.data.map(r => r.activity._id));
+      } else {
+        setRegisteredActivities([]);
+      }
     } catch (err) {
       setError('Failed to load activities');
     } finally {

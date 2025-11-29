@@ -83,16 +83,17 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     
     const updatedActivity = await activity.save();
     
-    // Notify registered students about the update
+    // Notify registered students about the update using bulk insert
     const registrations = await Registration.find({ activity: activity._id });
-    for (const reg of registrations) {
-      await Notification.create({
+    if (registrations.length > 0) {
+      const notifications = registrations.map(reg => ({
         user: reg.student,
         title: 'Activity Updated',
         message: `The activity "${activity.name}" has been updated.`,
         type: 'update',
         relatedActivity: activity._id
-      });
+      }));
+      await Notification.insertMany(notifications);
     }
     
     res.json(updatedActivity);
@@ -110,16 +111,17 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
       return res.status(404).json({ message: 'Activity not found' });
     }
     
-    // Notify registered students about cancellation
+    // Notify registered students about cancellation using bulk insert
     const registrations = await Registration.find({ activity: activity._id });
-    for (const reg of registrations) {
-      await Notification.create({
+    if (registrations.length > 0) {
+      const notifications = registrations.map(reg => ({
         user: reg.student,
         title: 'Activity Cancelled',
         message: `The activity "${activity.name}" has been cancelled.`,
         type: 'cancellation',
         relatedActivity: activity._id
-      });
+      }));
+      await Notification.insertMany(notifications);
     }
     
     // Delete all registrations for this activity

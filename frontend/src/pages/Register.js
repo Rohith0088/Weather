@@ -95,6 +95,7 @@ const Register = () => {
                 name="studentId"
                 value={formData.studentId}
                 onChange={handleChange}
+                required
                 placeholder="Enter your student ID"
               />
             </div>
