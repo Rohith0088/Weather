@@ -46,7 +46,11 @@ const Register = () => {
         navigate('/activities');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      if (err.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please ensure the backend is running on port 5000.');
+      } else {
+        setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

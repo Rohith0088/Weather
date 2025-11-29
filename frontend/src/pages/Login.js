@@ -24,7 +24,11 @@ const Login = () => {
         navigate('/activities');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      if (err.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please ensure the backend is running on port 5000.');
+      } else {
+        setError(err.response?.data?.message || 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

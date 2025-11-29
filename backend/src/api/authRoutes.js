@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
 // Generate JWT Token
@@ -10,10 +11,25 @@ const generateToken = (id) => {
   });
 };
 
+// Check database connection middleware
+const checkDbConnection = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ 
+      message: 'Database not connected. Please ensure MongoDB is running and try again.' 
+    });
+  }
+  next();
+};
+
 // Register user
-router.post('/register', async (req, res) => {
+router.post('/register', checkDbConnection, async (req, res) => {
   try {
     const { name, email, password, role, studentId } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
+    }
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -39,14 +55,20 @@ router.post('/register', async (req, res) => {
       token: generateToken(user._id)
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Register error:', error);
+    res.status(500).json({ message: error.message || 'Server error during registration' });
   }
 });
 
 // Login user
-router.post('/login', async (req, res) => {
+router.post('/login', checkDbConnection, async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
 
     // Find user
     const user = await User.findOne({ email });
@@ -69,7 +91,8 @@ router.post('/login', async (req, res) => {
       token: generateToken(user._id)
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ message: error.message || 'Server error during login' });
   }
 });
 
