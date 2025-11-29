@@ -1,74 +1,187 @@
-# Weather Dashboard
+# Student Extracurricular Activities Platform
 
-This project is a real-time weather dashboard that provides current weather, forecasts, and other weather-related information using multiple APIs.
+A web application to help manage student involvement in extracurricular activities such as clubs, sports, and events. The platform tracks participation, manages event registrations, and provides updates on upcoming activities.
 
 ## Features
 
-*   **Real-time Weather:** Get the current weather conditions for any city.
-*   **Forecasts:** View multi-day weather forecasts.
-*   **Geolocation:** Automatically detect the user's location via their IP address.
-*   **City Search:** Search for weather in any city around the world.
+### Admin Features
+- **Manage Activities**: Create, update, and delete extracurricular activities (clubs, sports, events)
+- **Track Participation**: View and manage student registrations for each activity
+- **Update Status**: Mark attendance (registered, attended, absent) for participants
+- **Dashboard**: View statistics and overview of all activities
 
-## APIs Used
+### Student Features
+- **Browse Activities**: View all available clubs, sports, and events
+- **Register for Activities**: Sign up for activities you're interested in
+- **Track Participation**: View your registration history and status
+- **Notifications**: Receive updates about activity changes and reminders
 
-*   [OpenWeatherMap](https://openweathermap.org/api): For global weather data.
-*   [WeatherAPI](https://www.weatherapi.com/): For forecasts, time zones, and astronomy data.
-*   [IP-API](https://ip-api.com/): For geolocation by IP.
-*   [GeoDB Cities](https://rapidapi.com/geodb-cities): For city lookup and information.
+## Tech Stack
+
+### Backend
+- **Node.js** with Express.js
+- **MongoDB** with Mongoose ODM
+- **JWT** for authentication
+- **bcryptjs** for password hashing
+
+### Frontend
+- **React.js** with React Router
+- **Axios** for API calls
+- **CSS** for styling
 
 ## Project Structure
-
-The project is divided into a frontend and a backend.
 
 ```
 /
 ├── frontend/
 │   ├── public/
-│   │   ├── index.html
-│   │   └── favicon.ico
+│   │   └── index.html
 │   ├── src/
 │   │   ├── api/
-│   │   │   └── weather.js      # Functions to call the backend weather endpoints
+│   │   │   └── index.js           # API client and endpoints
 │   │   ├── components/
-│   │   │   ├── WeatherCard.js  # Component to display current weather
-│   │   │   ├── Forecast.js     # Component to display the weather forecast
-│   │   │   └── SearchBar.js    # Component for users to search for a city
+│   │   │   ├── Navbar.js          # Navigation component
+│   │   │   ├── Navbar.css
+│   │   │   ├── ActivityCard.js    # Activity display card
+│   │   │   └── ActivityCard.css
+│   │   ├── context/
+│   │   │   └── AuthContext.js     # Authentication context
+│   │   ├── pages/
+│   │   │   ├── Home.js            # Landing page
+│   │   │   ├── Login.js           # Login page
+│   │   │   ├── Register.js        # Registration page
+│   │   │   ├── Activities.js      # Browse activities
+│   │   │   ├── MyActivities.js    # Student's registrations
+│   │   │   ├── Notifications.js   # Notifications page
+│   │   │   ├── AdminDashboard.js  # Admin dashboard
+│   │   │   └── ManageActivities.js# Manage activities (Admin)
 │   │   ├── App.js
-│   │   ├── index.js
-│   │   └── App.css
-│   ├── package.json
-│   └── README.md
+│   │   ├── App.css
+│   │   └── index.js
+│   └── package.json
 ├── backend/
 │   ├── src/
 │   │   ├── api/
-│   │   │   └── weatherRoutes.js # Express routes for all weather-related API calls
+│   │   │   ├── authRoutes.js      # Authentication routes
+│   │   │   ├── activityRoutes.js  # Activity CRUD routes
+│   │   │   ├── registrationRoutes.js # Registration routes
+│   │   │   └── notificationRoutes.js # Notification routes
 │   │   ├── config/
-│   │   │   └── index.js         # Configuration for API keys and other settings
-│   │   ├── services/
-│   │   │   └── weatherService.js# Logic to fetch data from external weather APIs
-│   │   ├── server.js            # Entry point for the backend server
-│   │   └── app.js               # Express app setup
-│   ├── package.json
-│   └── README.md
+│   │   │   ├── index.js           # Configuration
+│   │   │   └── db.js              # Database connection
+│   │   ├── middleware/
+│   │   │   └── auth.js            # Authentication middleware
+│   │   ├── models/
+│   │   │   ├── User.js            # User model
+│   │   │   ├── Activity.js        # Activity model
+│   │   │   ├── Registration.js    # Registration model
+│   │   │   └── Notification.js    # Notification model
+│   │   ├── server.js              # Entry point
+│   │   └── app.js                 # Express app setup
+│   └── package.json
 ├── .gitignore
 └── README.md
 ```
 
 ## Setup and Installation
 
-### Backend
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB (local or MongoDB Atlas)
 
-1.  Navigate to the `backend` directory: `cd backend`
-2.  Install dependencies: `npm install`
-3.  Create a `.env` file and add your API keys:
-    ```
-    OPENWEATHERMAP_API_KEY=your_key
-    WEATHERAPI_API_KEY=your_key
-    ```
-4.  Start the server: `npm start`
+### Backend Setup
 
-### Frontend
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
 
-1.  Navigate to the `frontend` directory: `cd frontend`
-2.  Install dependencies: `npm install`
-3.  Start the React app: `npm start`
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file with the following variables:
+   ```
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/extracurricular
+   JWT_SECRET=your_jwt_secret_key
+   ```
+
+4. Start the server:
+   ```bash
+   npm start
+   ```
+   
+   Or for development with auto-reload:
+   ```bash
+   npm run dev
+   ```
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file (optional):
+   ```
+   REACT_APP_API_URL=http://localhost:5000/api
+   ```
+
+4. Start the React app:
+   ```bash
+   npm start
+   ```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user (protected)
+
+### Activities
+- `GET /api/activities` - Get all activities
+- `GET /api/activities/:id` - Get single activity
+- `POST /api/activities` - Create activity (admin only)
+- `PUT /api/activities/:id` - Update activity (admin only)
+- `DELETE /api/activities/:id` - Delete activity (admin only)
+- `GET /api/activities/:id/participants` - Get participants (admin only)
+- `PUT /api/activities/:id/participants/:registrationId` - Update participant status (admin only)
+
+### Registrations
+- `GET /api/registrations/my-registrations` - Get user's registrations (protected)
+- `POST /api/registrations/register/:activityId` - Register for activity (protected)
+- `DELETE /api/registrations/cancel/:activityId` - Cancel registration (protected)
+
+### Notifications
+- `GET /api/notifications` - Get user's notifications (protected)
+- `GET /api/notifications/unread-count` - Get unread count (protected)
+- `PUT /api/notifications/:id/read` - Mark as read (protected)
+- `PUT /api/notifications/mark-all-read` - Mark all as read (protected)
+- `DELETE /api/notifications/:id` - Delete notification (protected)
+
+## User Roles
+
+### Student
+- Browse and filter activities
+- Register/cancel registrations
+- View participation history
+- Receive notifications
+
+### Admin
+- All student features
+- Create/edit/delete activities
+- View and manage participants
+- Update attendance status
+
+## License
+
+This project is for educational purposes.
