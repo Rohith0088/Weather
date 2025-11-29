@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const FileStorage = require('../storage/fileStorage');
+const Registration = require('../models/Registration');
+const Activity = require('../models/Activity');
+const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 
 // Get current user's registrations
 router.get('/my-registrations', protect, async (req, res) => {
   try {
-    const registrations = await FileStorage.registrations.find({ student: req.user._id });
-    const populatedRegistrations = await FileStorage.populate.activities(registrations);
+    const registrations = await Registration.find({ student: req.user._id })
+      .populate('activity')
+      .sort({ registeredAt: -1 });
     
-    // Sort by registeredAt descending
-    populatedRegistrations.sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt));
-    
-    res.json(populatedRegistrations);
+    res.json(registrations);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -21,7 +21,7 @@ router.get('/my-registrations', protect, async (req, res) => {
 // Register for an activity
 router.post('/register/:activityId', protect, async (req, res) => {
   try {
-    const activity = await FileStorage.activities.findById(req.params.activityId);
+    const activity = await Activity.findById(req.params.activityId);
     
     if (!activity) {
       return res.status(404).json({ message: 'Activity not found' });
@@ -40,7 +40,7 @@ router.post('/register/:activityId', protect, async (req, res) => {
     }
     
     // Check if already registered
-    const existingRegistration = await FileStorage.registrations.findOne({
+    const existingRegistration = await Registration.findOne({
       student: req.user._id,
       activity: req.params.activityId
     });
@@ -50,18 +50,17 @@ router.post('/register/:activityId', protect, async (req, res) => {
     }
     
     // Create registration
-    const registration = await FileStorage.registrations.create({
+    const registration = await Registration.create({
       student: req.user._id,
       activity: req.params.activityId
     });
     
     // Update participant count
-    await FileStorage.activities.update(req.params.activityId, {
-      currentParticipants: activity.currentParticipants + 1
-    });
+    activity.currentParticipants += 1;
+    await activity.save();
     
     // Create notification
-    await FileStorage.notifications.create({
+    await Notification.create({
       user: req.user._id,
       title: 'Registration Successful',
       message: `You have successfully registered for "${activity.name}".`,
@@ -71,6 +70,9 @@ router.post('/register/:activityId', protect, async (req, res) => {
     
     res.status(201).json(registration);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Already registered for this activity' });
+    }
     res.status(500).json({ message: error.message });
   }
 });
@@ -78,7 +80,7 @@ router.post('/register/:activityId', protect, async (req, res) => {
 // Cancel registration
 router.delete('/cancel/:activityId', protect, async (req, res) => {
   try {
-    const registration = await FileStorage.registrations.findOne({
+    const registration = await Registration.findOne({
       student: req.user._id,
       activity: req.params.activityId
     });
@@ -87,16 +89,15 @@ router.delete('/cancel/:activityId', protect, async (req, res) => {
       return res.status(404).json({ message: 'Registration not found' });
     }
     
-    const activity = await FileStorage.activities.findById(req.params.activityId);
+    const activity = await Activity.findById(req.params.activityId);
     
     // Delete registration
-    await FileStorage.registrations.delete(registration._id);
+    await Registration.findByIdAndDelete(registration._id);
     
     // Update participant count
     if (activity && activity.currentParticipants > 0) {
-      await FileStorage.activities.update(req.params.activityId, {
-        currentParticipants: activity.currentParticipants - 1
-      });
+      activity.currentParticipants -= 1;
+      await activity.save();
     }
     
     res.json({ message: 'Registration cancelled successfully' });

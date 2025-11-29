@@ -20,7 +20,8 @@ A web application to help manage student involvement in extracurricular activiti
 
 ### Backend
 - **Node.js** with Express.js
-- **Local JSON File Storage** (no database required!)
+- **MongoDB Atlas** (cloud database)
+- **Mongoose** ODM for MongoDB
 - **JWT** for authentication
 - **bcryptjs** for password hashing
 
@@ -60,19 +61,19 @@ A web application to help manage student involvement in extracurricular activiti
 │   │   └── index.js
 │   └── package.json
 ├── backend/
-│   ├── data/                      # Local storage (JSON files)
-│   │   ├── users.json
-│   │   ├── activities.json
-│   │   ├── registrations.json
-│   │   └── notifications.json
 │   ├── src/
 │   │   ├── api/
 │   │   │   ├── authRoutes.js      # Authentication routes
 │   │   │   ├── activityRoutes.js  # Activity CRUD routes
 │   │   │   ├── registrationRoutes.js # Registration routes
 │   │   │   └── notificationRoutes.js # Notification routes
-│   │   ├── storage/
-│   │   │   └── fileStorage.js     # File-based storage system
+│   │   ├── config/
+│   │   │   └── db.js              # MongoDB Atlas connection
+│   │   ├── models/
+│   │   │   ├── User.js            # User model
+│   │   │   ├── Activity.js        # Activity model
+│   │   │   ├── Registration.js    # Registration model
+│   │   │   └── Notification.js    # Notification model
 │   │   ├── middleware/
 │   │   │   └── auth.js            # Authentication middleware
 │   │   ├── server.js              # Entry point
@@ -86,7 +87,7 @@ A web application to help manage student involvement in extracurricular activiti
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- **No database required!** Data is stored locally in JSON files
+- MongoDB Atlas account (already configured)
 
 ### Backend Setup
 
@@ -110,7 +111,7 @@ A web application to help manage student involvement in extracurricular activiti
    npm run dev
    ```
 
-   The server will create JSON data files automatically in the `backend/data/` folder.
+   The server will connect to MongoDB Atlas automatically.
 
 ### Frontend Setup
 

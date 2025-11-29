@@ -1,23 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const FileStorage = require('../storage/fileStorage');
+const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 
 // Get current user's notifications
 router.get('/', protect, async (req, res) => {
   try {
-    const notifications = await FileStorage.notifications.find({ user: req.user._id });
+    const notifications = await Notification.find({ user: req.user._id })
+      .populate('relatedActivity', 'name type date')
+      .sort({ createdAt: -1 });
     
-    // Populate related activity info
-    const populatedNotifications = await Promise.all(notifications.map(async (notif) => {
-      if (notif.relatedActivity) {
-        const activity = await FileStorage.activities.findById(notif.relatedActivity);
-        return { ...notif, relatedActivity: activity ? { name: activity.name, type: activity.type, date: activity.date } : null };
-      }
-      return notif;
-    }));
-    
-    res.json(populatedNotifications);
+    res.json(notifications);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -26,7 +19,7 @@ router.get('/', protect, async (req, res) => {
 // Get unread notification count
 router.get('/unread-count', protect, async (req, res) => {
   try {
-    const count = await FileStorage.notifications.countDocuments({ 
+    const count = await Notification.countDocuments({ 
       user: req.user._id, 
       read: false 
     });
@@ -40,7 +33,7 @@ router.get('/unread-count', protect, async (req, res) => {
 // Mark notification as read
 router.put('/:id/read', protect, async (req, res) => {
   try {
-    const notification = await FileStorage.notifications.findOne({
+    const notification = await Notification.findOne({
       _id: req.params.id,
       user: req.user._id
     });
@@ -49,9 +42,10 @@ router.put('/:id/read', protect, async (req, res) => {
       return res.status(404).json({ message: 'Notification not found' });
     }
     
-    const updatedNotification = await FileStorage.notifications.update(req.params.id, { read: true });
+    notification.read = true;
+    await notification.save();
     
-    res.json(updatedNotification);
+    res.json(notification);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -60,7 +54,7 @@ router.put('/:id/read', protect, async (req, res) => {
 // Mark all notifications as read
 router.put('/mark-all-read', protect, async (req, res) => {
   try {
-    await FileStorage.notifications.updateMany(
+    await Notification.updateMany(
       { user: req.user._id, read: false },
       { read: true }
     );
@@ -74,7 +68,7 @@ router.put('/mark-all-read', protect, async (req, res) => {
 // Delete notification
 router.delete('/:id', protect, async (req, res) => {
   try {
-    const notification = await FileStorage.notifications.findOne({
+    const notification = await Notification.findOneAndDelete({
       _id: req.params.id,
       user: req.user._id
     });
@@ -82,8 +76,6 @@ router.delete('/:id', protect, async (req, res) => {
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
-    
-    await FileStorage.notifications.delete(req.params.id);
     
     res.json({ message: 'Notification deleted' });
   } catch (error) {
