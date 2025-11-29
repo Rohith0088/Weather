@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const FileStorage = require('../storage/fileStorage');
 
 // Protect routes - require authentication
 const protect = async (req, res, next) => {
@@ -15,7 +15,7 @@ const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-jwt-secret');
-    req.user = await User.findById(decoded.id).select('-password');
+    req.user = await FileStorage.users.findById(decoded.id);
     
     if (!req.user) {
       return res.status(401).json({ message: 'User not found' });

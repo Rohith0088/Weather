@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Activity = require('../models/Activity');
-const Registration = require('../models/Registration');
-const Notification = require('../models/Notification');
+const FileStorage = require('../storage/fileStorage');
 const { protect, adminOnly } = require('../middleware/auth');
 
 // Get all activities (public)
@@ -14,9 +12,7 @@ router.get('/', async (req, res) => {
     if (type) filter.type = type;
     if (status) filter.status = status;
     
-    const activities = await Activity.find(filter)
-      .populate('createdBy', 'name email')
-      .sort({ date: 1 });
+    const activities = await FileStorage.activities.find(filter);
     res.json(activities);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -26,8 +22,7 @@ router.get('/', async (req, res) => {
 // Get single activity
 router.get('/:id', async (req, res) => {
   try {
-    const activity = await Activity.findById(req.params.id)
-      .populate('createdBy', 'name email');
+    const activity = await FileStorage.activities.findById(req.params.id);
     
     if (!activity) {
       return res.status(404).json({ message: 'Activity not found' });
@@ -44,7 +39,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
   try {
     const { name, description, type, date, time, location, maxParticipants } = req.body;
     
-    const activity = await Activity.create({
+    const activity = await FileStorage.activities.create({
       name,
       description,
       type,
@@ -64,7 +59,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // Update activity (admin only)
 router.put('/:id', protect, adminOnly, async (req, res) => {
   try {
-    const activity = await Activity.findById(req.params.id);
+    const activity = await FileStorage.activities.findById(req.params.id);
     
     if (!activity) {
       return res.status(404).json({ message: 'Activity not found' });
@@ -72,19 +67,21 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     
     const { name, description, type, date, time, location, maxParticipants, status } = req.body;
     
-    activity.name = name || activity.name;
-    activity.description = description || activity.description;
-    activity.type = type || activity.type;
-    activity.date = date || activity.date;
-    activity.time = time || activity.time;
-    activity.location = location || activity.location;
-    activity.maxParticipants = maxParticipants || activity.maxParticipants;
-    activity.status = status || activity.status;
+    const updateData = {
+      name: name || activity.name,
+      description: description || activity.description,
+      type: type || activity.type,
+      date: date || activity.date,
+      time: time || activity.time,
+      location: location || activity.location,
+      maxParticipants: maxParticipants || activity.maxParticipants,
+      status: status || activity.status
+    };
     
-    const updatedActivity = await activity.save();
+    const updatedActivity = await FileStorage.activities.update(req.params.id, updateData);
     
     // Notify registered students about the update using bulk insert
-    const registrations = await Registration.find({ activity: activity._id });
+    const registrations = await FileStorage.registrations.find({ activity: activity._id });
     if (registrations.length > 0) {
       const notifications = registrations.map(reg => ({
         user: reg.student,
@@ -93,7 +90,7 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
         type: 'update',
         relatedActivity: activity._id
       }));
-      await Notification.insertMany(notifications);
+      await FileStorage.notifications.insertMany(notifications);
     }
     
     res.json(updatedActivity);
@@ -105,14 +102,14 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
 // Delete activity (admin only)
 router.delete('/:id', protect, adminOnly, async (req, res) => {
   try {
-    const activity = await Activity.findById(req.params.id);
+    const activity = await FileStorage.activities.findById(req.params.id);
     
     if (!activity) {
       return res.status(404).json({ message: 'Activity not found' });
     }
     
     // Notify registered students about cancellation using bulk insert
-    const registrations = await Registration.find({ activity: activity._id });
+    const registrations = await FileStorage.registrations.find({ activity: activity._id });
     if (registrations.length > 0) {
       const notifications = registrations.map(reg => ({
         user: reg.student,
@@ -121,13 +118,13 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
         type: 'cancellation',
         relatedActivity: activity._id
       }));
-      await Notification.insertMany(notifications);
+      await FileStorage.notifications.insertMany(notifications);
     }
     
     // Delete all registrations for this activity
-    await Registration.deleteMany({ activity: activity._id });
+    await FileStorage.registrations.deleteMany({ activity: activity._id });
     
-    await Activity.findByIdAndDelete(req.params.id);
+    await FileStorage.activities.delete(req.params.id);
     
     res.json({ message: 'Activity deleted successfully' });
   } catch (error) {
@@ -138,10 +135,10 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
 // Get activity participants (admin only)
 router.get('/:id/participants', protect, adminOnly, async (req, res) => {
   try {
-    const registrations = await Registration.find({ activity: req.params.id })
-      .populate('student', 'name email studentId');
+    const registrations = await FileStorage.registrations.find({ activity: req.params.id });
+    const populatedRegistrations = await FileStorage.populate.students(registrations);
     
-    res.json(registrations);
+    res.json(populatedRegistrations);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -152,15 +149,14 @@ router.put('/:id/participants/:registrationId', protect, adminOnly, async (req, 
   try {
     const { status } = req.body;
     
-    const registration = await Registration.findById(req.params.registrationId);
+    const registration = await FileStorage.registrations.findById(req.params.registrationId);
     if (!registration) {
       return res.status(404).json({ message: 'Registration not found' });
     }
     
-    registration.status = status;
-    await registration.save();
+    const updatedRegistration = await FileStorage.registrations.update(req.params.registrationId, { status });
     
-    res.json(registration);
+    res.json(updatedRegistration);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

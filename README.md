@@ -20,7 +20,7 @@ A web application to help manage student involvement in extracurricular activiti
 
 ### Backend
 - **Node.js** with Express.js
-- **MongoDB** with Mongoose ODM
+- **Local JSON File Storage** (no database required!)
 - **JWT** for authentication
 - **bcryptjs** for password hashing
 
@@ -60,22 +60,21 @@ A web application to help manage student involvement in extracurricular activiti
 │   │   └── index.js
 │   └── package.json
 ├── backend/
+│   ├── data/                      # Local storage (JSON files)
+│   │   ├── users.json
+│   │   ├── activities.json
+│   │   ├── registrations.json
+│   │   └── notifications.json
 │   ├── src/
 │   │   ├── api/
 │   │   │   ├── authRoutes.js      # Authentication routes
 │   │   │   ├── activityRoutes.js  # Activity CRUD routes
 │   │   │   ├── registrationRoutes.js # Registration routes
 │   │   │   └── notificationRoutes.js # Notification routes
-│   │   ├── config/
-│   │   │   ├── index.js           # Configuration
-│   │   │   └── db.js              # Database connection
+│   │   ├── storage/
+│   │   │   └── fileStorage.js     # File-based storage system
 │   │   ├── middleware/
 │   │   │   └── auth.js            # Authentication middleware
-│   │   ├── models/
-│   │   │   ├── User.js            # User model
-│   │   │   ├── Activity.js        # Activity model
-│   │   │   ├── Registration.js    # Registration model
-│   │   │   └── Notification.js    # Notification model
 │   │   ├── server.js              # Entry point
 │   │   └── app.js                 # Express app setup
 │   └── package.json
@@ -87,7 +86,7 @@ A web application to help manage student involvement in extracurricular activiti
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- MongoDB (local or MongoDB Atlas)
+- **No database required!** Data is stored locally in JSON files
 
 ### Backend Setup
 
@@ -101,14 +100,7 @@ A web application to help manage student involvement in extracurricular activiti
    npm install
    ```
 
-3. Create a `.env` file with the following variables:
-   ```
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/extracurricular
-   JWT_SECRET=your_jwt_secret_key
-   ```
-
-4. Start the server:
+3. Start the server:
    ```bash
    npm start
    ```
@@ -117,6 +109,8 @@ A web application to help manage student involvement in extracurricular activiti
    ```bash
    npm run dev
    ```
+
+   The server will create JSON data files automatically in the `backend/data/` folder.
 
 ### Frontend Setup
 
@@ -130,15 +124,12 @@ A web application to help manage student involvement in extracurricular activiti
    npm install
    ```
 
-3. Create a `.env` file (optional):
-   ```
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
-
-4. Start the React app:
+3. Start the React app:
    ```bash
    npm start
    ```
+
+4. Open http://localhost:3000 in your browser
 
 ## API Endpoints
 
